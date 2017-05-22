@@ -4,6 +4,7 @@ from twilio.twiml.voice_response import VoiceResponse
 from yaml import load, YAMLError
 
 app = Flask(__name__)
+
 settings = None
 unlocked_until = datetime.now()
 
@@ -21,6 +22,10 @@ def whitelisted(number):
 def building_number(number):
     return number == settings['building_number']
 
+# @return [String] The digits to play to open the door.
+def building_tone():
+    return ('w' * settings['pause_time']) + settings['digit']
+
 @app.route('/', methods=['GET', 'POST'])
 def incoming_call():
     from_number = request.values.get('From', None)
@@ -28,8 +33,7 @@ def incoming_call():
 
     # If the number is the building's and the door is unlocked, allow entry.
     if unlocked() and building_number(from_number):
-        play = ('w' * settings['pause_time']) + settings['digit']
-        resp.play(digits=play)
+        resp.play(digits=building_tone())
 
     # If the number is whitelisted, allow for unlocking.
     elif whitelisted(number):
